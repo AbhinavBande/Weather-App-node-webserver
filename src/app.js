@@ -2,6 +2,9 @@ const express=require('express')
 const path=require('path')
 const hbs=require('hbs')
 
+const geocode=require('../utils/geocode.js')
+const forecast=require('../utils/forecast.js')
+
 const app=express()
 
 //express config dir
@@ -39,7 +42,28 @@ app.get('/help',(req,res)=>{
 })
 
 app.get('/weather',(req,res)=>{
-    res.send('weather')
+    if(!req.query.location){
+        return res.send({
+            error: 'Location must be provided'
+        })
+    }
+
+    geocode(req.query.location, (error,{location, latitude, longitude}={})=>{
+        if(error){
+            return res.send({ error })
+        }
+    
+        forecast(latitude,longitude,(error,message)=>{
+            if(error){
+                return res.send({ error })
+            }
+            res.send({
+                location,
+                message
+            })
+        })
+    })
+
 })
 
 app.get('/help/*',(req,res)=>{
